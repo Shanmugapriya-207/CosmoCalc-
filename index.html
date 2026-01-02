@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Anime Galaxy Calculator</title>
+<style>
+    /* --- Reset & Body --- */
+    * { margin:0; padding:0; box-sizing:border-box; font-family: 'Comic Sans MS', cursive, sans-serif; }
+    body {
+        display:flex;
+        justify-content:center;
+        align-items:center;
+        height:100vh;
+        background: radial-gradient(circle at top, #1a1a40, #000000);
+        overflow:hidden;
+    }
+
+    /* --- Background Bubbles & Stars --- */
+    #background { position: fixed; top:0; left:0; width:100vw; height:100vh; z-index:0; overflow:hidden; }
+    .bubble, .star { position:absolute; border-radius:50%; opacity:0.8; }
+    .bubble { background: rgba(255,255,255,0.15); animation: floatBubble linear infinite; }
+    @keyframes floatBubble { 0% { transform: translateY(100vh) translateX(0); opacity:0; } 50% { opacity:0.8; } 100% { transform: translateY(-50vh) translateX(50px); opacity:0; } }
+    .star { background:white; width:2px; height:2px; animation: twinkle 2s infinite alternate; }
+    @keyframes twinkle { 0% { opacity:0.2; } 50% { opacity:1; } 100% { opacity:0.2; } }
+
+    /* --- Calculator Container --- */
+    .calculator {
+        position: relative;
+        z-index: 1;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 20px;
+        padding: 20px;
+        width: 320px;
+        box-shadow: 0 0 30px rgba(255,255,255,0.3);
+        backdrop-filter: blur(10px);
+        display: grid;
+        grid-template-rows: auto 1fr;
+    }
+
+    /* --- Display --- */
+    .display {
+        background: rgba(255,255,255,0.2);
+        border-radius: 15px;
+        padding: 15px;
+        text-align: right;
+        font-size: 2em;
+        color: white;
+        margin-bottom: 10px;
+        overflow-x:auto;
+    }
+
+    /* --- Buttons --- */
+    .buttons {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap:10px;
+    }
+
+    button {
+        padding:15px;
+        font-size:1.2em;
+        border:none;
+        border-radius:10px;
+        cursor:pointer;
+        background: rgba(255,255,255,0.2);
+        color:white;
+        transition:0.2s;
+    }
+
+    button:hover { background: rgba(255,255,255,0.4); transform: scale(1.1); }
+
+    /* --- Operator Buttons --- */
+    .operator { background: rgba(255, 150, 150,0.3); }
+    .operator:hover { background: rgba(255, 150, 150,0.6); }
+
+    /* --- Scientific Buttons --- */
+    .scientific { background: rgba(150, 200, 255,0.3); }
+    .scientific:hover { background: rgba(150,200,255,0.6); }
+</style>
+</head>
+<body>
+
+<!-- Background -->
+<div id="background"></div>
+
+<!-- Calculator -->
+<div class="calculator">
+    <div class="display" id="display">0</div>
+    <div class="buttons">
+        <!-- Row 1 -->
+        <button class="scientific" onclick="clearDisplay()">C</button>
+        <button class="scientific" onclick="deleteLast()">DEL</button>
+        <button class="scientific" onclick="appendValue('%')">%</button>
+        <button class="operator" onclick="appendValue('/')">/</button>
+        <button class="scientific" onclick="appendValue('(')">(</button>
+
+        <!-- Row 2 -->
+        <button onclick="appendValue('7')">7</button>
+        <button onclick="appendValue('8')">8</button>
+        <button onclick="appendValue('9')">9</button>
+        <button class="operator" onclick="appendValue('*')">*</button>
+        <button class="scientific" onclick="appendValue(')')">)</button>
+
+        <!-- Row 3 -->
+        <button onclick="appendValue('4')">4</button>
+        <button onclick="appendValue('5')">5</button>
+        <button onclick="appendValue('6')">6</button>
+        <button class="operator" onclick="appendValue('-')">-</button>
+        <button class="scientific" onclick="appendValue('√(')">√</button>
+
+        <!-- Row 4 -->
+        <button onclick="appendValue('1')">1</button>
+        <button onclick="appendValue('2')">2</button>
+        <button onclick="appendValue('3')">3</button>
+        <button class="operator" onclick="appendValue('+')">+</button>
+        <button class="scientific" onclick="appendValue('^')">^</button>
+
+        <!-- Row 5 -->
+        <button onclick="appendValue('0')">0</button>
+        <button onclick="appendValue('.')">.</button>
+        <button class="scientific" onclick="calculate()">=</button>
+        <button class="scientific" onclick="appendValue('!')">!</button>
+        <button class="scientific" onclick="appendValue('pi')">π</button>
+    </div>
+</div>
+
+<script>
+const display = document.getElementById('display');
+let current = "";
+
+// --- Append value to display ---
+function appendValue(val) {
+    if(val==='pi') val = Math.PI;
+    current += val;
+    display.innerText = current;
+}
+
+// --- Clear display ---
+function clearDisplay() { current=""; display.innerText="0"; }
+
+// --- Delete last ---
+function deleteLast() { current = current.slice(0,-1); display.innerText = current||'0'; }
+
+// --- Calculate result ---
+function calculate() {
+    try {
+        // Replace ^ with Math.pow
+        let expression = current.replace(/(\d+)\^(\d+)/g,"Math.pow($1,$2)");
+        // Replace factorial
+        expression = expression.replace(/(\d+)!/g,"factorial($1)");
+        // Replace √
+        expression = expression.replace(/√\(/g,"Math.sqrt(");
+        display.innerText = eval(expression);
+        current = display.innerText;
+    } catch(e) { display.innerText="Error"; current=""; }
+}
+
+// --- Factorial function ---
+function factorial(n){ if(n==0||n==1) return 1; return n*factorial(n-1); }
+
+// --- Bubbles & Stars ---
+const bg = document.getElementById('background');
+const numBubbles = 50;
+const numStars = 100;
+
+for(let i=0;i<numBubbles;i++){
+    const bubble=document.createElement('div');
+    bubble.classList.add('bubble');
+    const size=Math.random()*25+5;
+    bubble.style.width=size+'px';
+    bubble.style.height=size+'px';
+    bubble.style.left=Math.random()*100+'vw';
+    bubble.style.animationDuration=(Math.random()*10+5)+'s';
+    bg.appendChild(bubble);
+}
+
+for(let i=0;i<numStars;i++){
+    const star=document.createElement('div');
+    star.classList.add('star');
+    const size=Math.random()*2+1;
+    star.style.width=size+'px';
+    star.style.height=size+'px';
+    star.style.left=Math.random()*100+'vw';
+    star.style.top=Math.random()*100+'vh';
+    star.style.animationDuration=(Math.random()*3+1)+'s';
+    bg.appendChild(star);
+}
+</script>
+
+</body>
+</html>
